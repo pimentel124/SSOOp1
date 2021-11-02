@@ -29,12 +29,13 @@ char *my_strcpy(char *dest, const char *src){
 
 char *my_strncpy(char *dest, const char *src, size_t n){
     size_t i;
-    for(i=0; i<n && src[i] != '\0'; i++)
+    for( i = 0; i < n && src[i] != '\0'; i++){
         dest[i] = src[i];
-    for( ; i < n; i++){
-        dest[i] = '\0';
-        return dest;
     }
+    while (i < n) { 
+        dest[i] = '\0';
+    }
+    return dest;
 }
 
 char *my_strcat(char *dest, const char *src){
@@ -47,11 +48,11 @@ char *my_strcat(char *dest, const char *src){
 }
 
 char *my_strchr(const char *s, int c){
-int pos = 0;
-    while (s[pos] != c && s[pos] != '\0')
-        pos++;
-    if (s[pos] == c)
-        return &s[pos];
+int i = 0;
+    while (s[i] != c && s[i] != '\0')
+        i++;
+    if (s[i] == c)
+        return &s[i];
     else
         return NULL;
 }
