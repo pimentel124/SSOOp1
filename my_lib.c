@@ -68,7 +68,128 @@ while(s[i] != c && s[i] != '\0'){ //Mentre char no trobat i no final itinera
     i++;
 }
 if (s[i] == c) //Si char trobat, retorna el valor de la posició s[i]
-        return &s[i];
+        return (char*)&s[i];
     else
         return NULL; //Si no trobat, retorna NULL
+}
+
+//https://stackoverflow.com/questions/52927678/c-stack-manager-project-file-i-o-with-syscalls-problems
+struct my_stack *my_stack_init (int size){
+    struct my_stack *stack = malloc(sizeof(struct my_stack));
+    stack -> top = NULL;
+    stack -> size = size;
+    return stack;
+}
+
+int my_stack_push (struct my_stack *stack, void *data){
+    struct my_stack_node *newNode = malloc(sizeof(struct my_stack_node));
+
+    if(stack == NULL && sizeof(data)> 0){
+        printf("Null Stack or data size error.\n");
+        //la pila debe existir
+        return -1;
+    } 
+    else {
+        newNode -> data = data;
+        if(stack -> top == NULL) {
+            newNode -> next = NULL;
+            stack -> top = newNode;
+
+        }
+        else {
+            newNode -> next = stack -> top;
+            stack -> top = newNode;  
+        }
+    }
+    return 0;
+}
+
+void *my_stack_pop (struct my_stack *stack){
+    if(stack -> top == NULL) {
+        return NULL;
+    }
+    struct my_stack_node *nodeToDelete = stack -> top;
+    void *data = nodeToDelete -> data;
+    stack -> top = nodeToDelete -> next;
+    free(nodeToDelete);
+
+    return data; 
+}
+
+int my_stack_len (struct my_stack *stack){
+    int numNodes = 0;
+    struct my_stack_node *currentElement = stack -> top;
+    while(currentElement != NULL) {
+        numNodes++;
+        currentElement = currentElement ->next;
+    }
+    return numNodes;
+}
+
+int my_stack_purge (struct my_stack *stack){
+    int numBytes = 0;
+    struct my_stack_node *currentElement = stack -> top;
+    while(currentElement != NULL) {
+        numBytes = + sizeof(currentElement);
+        free(currentElement);
+        currentElement = currentElement ->next;
+    }
+    return numBytes;
+}
+
+void recursiveWrite(struct my_stack_node *nodo, int fileDesc, int sizeData) {
+    if(nodo ->next != NULL) recursiveWrite(nodo -> next,fileDesc,sizeData);
+    if(write(fileDesc, nodo -> data, sizeData)== -1){
+        printf("Error de escritura\n");
+        return;// error escritura.
+    }
+}
+
+int my_stack_write (struct my_stack *stack, char *filename){
+    struct my_stack_node *currentNode = stack -> top;
+    int fileDesc = open(filename, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+    if(fileDesc == -1) {
+        return -1; // Error open();
+    }
+    if(write(fileDesc, &stack -> size, sizeof(stack -> size)) == -1){
+        return -1; // Error write();
+    }
+    int sizeData = stack -> size;
+    recursiveWrite(currentNode,fileDesc,sizeData);
+    close(fileDesc);
+
+    return my_stack_len(stack);
+}
+
+struct my_stack *my_stack_read (char *filename){
+    int fileDesc = open(filename, O_RDONLY, S_IRUSR);
+    if(fileDesc == -1) {
+        return NULL; // Error open();
+    }
+    char *buffer = malloc(sizeof(int));
+    int readBytes;
+    if((readBytes = read(fileDesc, buffer, sizeof(int))) == -1){
+        printf("Error reading data size.\n");
+        return NULL;
+    }
+    int dataSize = 0;
+    dataSize = (int) *buffer; // parse data Size from buffer.
+    struct my_stack *stack; 
+    stack = malloc(sizeof(struct my_stack));
+    stack = my_stack_init(dataSize); // initialize Stack
+    buffer = realloc(buffer, stack -> size);
+    if(buffer == NULL){
+        return NULL;
+    }
+    else{
+        while(read(fileDesc, buffer, stack -> size) > 0) {
+            if((my_stack_push(stack,buffer))== -1){
+                printf("Error en my_stack_read: Push error.\n");
+                return NULL;
+            }
+            buffer = malloc(stack -> size);
+        }
+    close(fileDesc);
+    return stack;
+    }   
 }
