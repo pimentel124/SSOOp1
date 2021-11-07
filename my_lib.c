@@ -74,28 +74,28 @@ if (s[i] == c) //Si char trobat, retorna el valor de la posició s[i]
 }
 
 struct my_stack *my_stack_init (int size){
-    struct my_stack *stack = malloc(sizeof(struct my_stack));
-    stack -> top = NULL;
-    stack -> size = size;
+    struct my_stack *stack = malloc(sizeof(struct my_stack)); //Cream i reservam espai per la pila
+    stack -> top = NULL; //el node superior de la pila s'inicialitza com a NULL
+    stack -> size = size; //establim el tamany de les dades
     return stack;
 }
 
 int my_stack_push (struct my_stack *stack, void *data){
-    struct my_stack_node *nodeToAdd;
-    nodeToAdd = malloc(sizeof(struct my_stack_node));
+    struct my_stack_node *nodeToAdd; //inicialitzam el nou node a afegir
+    nodeToAdd = malloc(sizeof(struct my_stack_node)); //reservam la memória necessaria
 
-    if(stack == NULL && sizeof(data)> 0){
-        printf("Null Stack or data size error.\n");
+    if(stack == NULL && sizeof(data)> 0){ //Comprobam que la pila existeixi y que el tamany de les dades no sigui 0
+        printf("Hi ha un error amb el tamany de les dades o No existeix la pila.\n");
         return -1;
     } 
     else {
-        nodeToAdd -> data = data;
-        if(stack -> top == NULL) {
+        nodeToAdd -> data = data; //establim la data al camp data del node
+        if(stack -> top == NULL) { //si no existeix un node superior, afegim el nou node com aquest.
             nodeToAdd -> next = NULL;
             stack -> top = nodeToAdd;
 
         }
-        else {
+        else { //en cas contrari, afegim el nou node a la següent posoció de la pila
             nodeToAdd -> next = stack -> top;
             stack -> top = nodeToAdd;  
         }
@@ -104,57 +104,57 @@ int my_stack_push (struct my_stack *stack, void *data){
 }
 
 void *my_stack_pop (struct my_stack *stack){
-    if(stack -> top == NULL) {
+    if(stack -> top == NULL) { //comprobam que hi hagi qualque node per eliminar
         return NULL;
     }
-    struct my_stack_node *deleteNode = stack -> top;
+    struct my_stack_node *deleteNode = stack -> top; //apuntam al node superior de la pila
     void *data = deleteNode -> data;
-    stack -> top = deleteNode -> next;
-    free(deleteNode);
+    stack -> top = deleteNode -> next; //feim que el node superior ara sugui el següent node de la pila
+    free(deleteNode); //lliberam l'espai del anterior node superior
 
     return data; 
 }
 
 int my_stack_len (struct my_stack *stack){
-    int numNodes = 0;
-    struct my_stack_node *currentNode = stack -> top;
-    while(currentNode != NULL) {
-        numNodes++;
-        currentNode = currentNode ->next;
+    int numNodes = 0; 
+    struct my_stack_node *currentNode = stack -> top; //apuntam al node superior de la pila
+    while(currentNode != NULL) { //mentres que el node al que apuntam no sigui null
+        numNodes++; //augmentam el contador de nodes
+        currentNode = currentNode ->next; //apuntam al següent node de la pila
     }
     return numNodes;
 }
 
 int my_stack_purge (struct my_stack *stack){
-    int numNodes = my_stack_len(stack);
-    int numBytes = 0;
-    struct my_stack_node *currentNode = stack -> top;
-    while(currentNode != NULL) {
-        my_stack_pop(stack);
-        currentNode = currentNode ->next;
+    int numNodes = my_stack_len(stack); //feim us del métode my_stack_len() per obtenir el nombre de nodes de la pila
+    int numBytes = 0; //inicialitzam el nombre de bytes lliberats a 0
+    struct my_stack_node *currentNode = stack -> top; //apuntam al node superior de la pila
+    while(currentNode != NULL) { //mentres el node no sigui null
+        my_stack_pop(stack); //eliminam el node
+        currentNode = currentNode ->next; //pasam al següent
     }
-    numBytes = numNodes*(sizeof(struct my_stack_node)+stack -> size) + sizeof (struct my_stack);
-    free(stack);
+    numBytes = numNodes*(sizeof(struct my_stack_node)+stack -> size) + sizeof (struct my_stack); //calculam el nombre de bytes eliminats
+    free(stack); //lliberam memória
     return numBytes;
 }
 
-void recursWrite(struct my_stack_node *nodo, ssize_t file, int size_data) {
-    if(nodo ->next != NULL){
-        recursWrite(nodo -> next,file,size_data);
+void recursWrite(struct my_stack_node *nodo, ssize_t file, int size_data) { //métode que escriu de manera recursiva en la pila
+    if(nodo ->next != NULL){ //mentres que hagi un següent node que escriure
+        recursWrite(nodo -> next,file,size_data); //tornam a cridar al métode
     } 
-    ssize_t wrt = write(file, nodo -> data, size_data);
-    if(wrt == -1){
-        printf("Error d'escriptura\n");
+    ssize_t wrt = write(file, nodo -> data, size_data); // escrivim a l'arxiu el node amb les dades
+    if(wrt == -1){//en cas de que no s'hagi pogut escriure, write() retorna -1
+        printf("Error d'escriptura\n"); //Hi ha hagut un error
         return;
     }
     
 }
 
 int my_stack_write(struct my_stack *stack, char *filename) {
-    struct my_stack_node *thisNode = stack -> top;
-    ssize_t file = open(filename, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
-    int size_data = stack -> size;
-    if(file == -1) {
+    struct my_stack_node *thisNode = stack -> top; //apuntam al node superior de la pila
+    ssize_t file = open(filename, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR); //obrim y cream l'arxiu a escriure
+    int size_data = stack -> size; 
+    if(file == -1) { //en cas de que no s'hagi pogut obrir o crear l'arxiu, open() retorna -1
         return -1;
     }
     ssize_t wrt = write(file, &stack -> size, sizeof(size_data));
@@ -162,18 +162,18 @@ int my_stack_write(struct my_stack *stack, char *filename) {
         return -1;
     }
     
-    recursWrite(thisNode,file,size_data);
-    close(file);
+    recursWrite(thisNode,file,size_data); //cridam a el metode d'escriptura recursiva
+    close(file); //tancam l'arxiu
 
     return my_stack_len(stack);
 }
 
 struct my_stack *my_stack_read(char *filename) {
-    int file = open(filename, O_RDONLY, S_IRUSR);
-    if(file == -1) {
+    int file = open(filename, O_RDONLY, S_IRUSR); //obrim l'arxiu a llegir
+    if(file == -1) { //en cas de que no s'hagi pogut obrir l'arxiu, open retorna -1
         return NULL;
     }
-    char *buffer = malloc(sizeof(int));
+    char *buffer = malloc(sizeof(int)); 
     ssize_t readBytes;
     readBytes = read(file, buffer, sizeof(int));
     if(readBytes == -1) {
