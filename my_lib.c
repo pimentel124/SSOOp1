@@ -127,61 +127,43 @@ int my_stack_len (struct my_stack *stack){
 }
 
 int my_stack_purge (struct my_stack *stack){
+    int numNodes = 0;
     int numBytes = 0;
     struct my_stack_node *currentNode = stack -> top;
-    struct my_stack_node *nextNode = stack -> top;
+    struct my_stack_node *nextNode;
     while(currentNode != NULL) {
         nextNode = currentNode ->next;
         free(currentNode);
         currentNode = nextNode;
-        numBytes++;
+        numNodes++;
     }
+    numBytes = numNodes*(sizeof(struct my_stack_node)+stack -> size) + sizeof (struct my_stack);
     return numBytes;
 }
 
-void recursiveW(struct my_stack_node *nodo, ssize_t file, int size) {
-    int ret;
-    ret = write(file, nodo -> data, size);
-    if(ret == -1){
+void recursiveWrite(struct my_stack_node *nodo, int fileDesc, int sizeData) {
+    if(nodo ->next != NULL) recursiveWrite(nodo -> next,fileDesc,sizeData);
+    if(write(fileDesc, nodo -> data, sizeData)== -1){
         printf("Error de escritura\n");
         return;// error escritura.
     }
-    if(nodo ->next != NULL) recursiveW(nodo -> next,file,size);
 }
 
 int my_stack_write(struct my_stack *stack, char *filename) {
     struct my_stack_node *currentNode = stack -> top;
-    ssize_t file = open(filename, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
-    if(file == -1) {
+    int fileDesc = open(filename, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+    if(fileDesc == -1) {
         return -1; // Error open();
     }
-    if(write(file, &stack -> size, sizeof(stack -> size)) == -1){
+    if(write(fileDesc, &stack -> size, sizeof(stack -> size)) == -1){
         return -1; // Error write();
     }
-    int size = stack -> size;
-    recursiveW(currentNode,file,size);
-    close(file);
+    int sizeData = stack -> size;
+    recursiveWrite(currentNode,fileDesc,sizeData);
+    close(fileDesc);
 
     return my_stack_len(stack);
 }
-
-/*int my_stack_write(struct my_stack *stack, char *filename) {
-    int numNodes = 0;
-    struct my_stack *aux;
-    aux = my_stack_init(sizeof(stack));
-    *aux = *stack;
-    ssize_t file = open(filename, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
-    if(file == -1){
-        return numNodes = -1;
-    }
-    void *data = my_stack_pop(aux);
-    while(data != NULL){
-        write(file, data, stack -> size);
-        numNodes++;
-        data = my_stack_pop(aux);
-    }
-    return numNodes;
-}*/
 
 struct my_stack *my_stack_read(char *filename) {
     int fileDesc = open(filename, O_RDONLY, S_IRUSR);
