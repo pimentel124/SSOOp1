@@ -8,3 +8,4 @@ test1
 my_lib.o
 test1.o
 test2a
+my_lib.o
