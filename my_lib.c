@@ -128,48 +128,70 @@ int my_stack_len (struct my_stack *stack){
 
 int my_stack_purge (struct my_stack *stack){
     int numBytes = 0;
-    struct my_stack_node *currentElement = stack -> top;
-    while(currentElement != NULL) {
-        numBytes = + sizeof(currentElement);
-        free(currentElement);
-        currentElement = currentElement ->next;
+    struct my_stack_node *currentNode = stack -> top;
+    struct my_stack_node *nextNode = stack -> top;
+    while(currentNode != NULL) {
+        nextNode = currentNode ->next;
+        free(currentNode);
+        currentNode = nextNode;
+        numBytes++;
     }
     return numBytes;
 }
 
-void recursiveWrite(struct my_stack_node *nodo, int fileDesc, int sizeData) {
-    if(nodo ->next != NULL) recursiveWrite(nodo -> next,fileDesc,sizeData);
-    if(write(fileDesc, nodo -> data, sizeData)== -1){
+void recursiveW(struct my_stack_node *nodo, ssize_t file, int size) {
+    int ret;
+    ret = write(file, nodo -> data, size);
+    if(ret == -1){
         printf("Error de escritura\n");
         return;// error escritura.
     }
+    if(nodo ->next != NULL) recursiveW(nodo -> next,file,size);
 }
 
-int my_stack_write (struct my_stack *stack, char *filename){
+int my_stack_write(struct my_stack *stack, char *filename) {
     struct my_stack_node *currentNode = stack -> top;
-    int fileDesc = open(filename, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
-    if(fileDesc == -1) {
+    ssize_t file = open(filename, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+    if(file == -1) {
         return -1; // Error open();
     }
-    if(write(fileDesc, &stack -> size, sizeof(stack -> size)) == -1){
+    if(write(file, &stack -> size, sizeof(stack -> size)) == -1){
         return -1; // Error write();
     }
-    int sizeData = stack -> size;
-    recursiveWrite(currentNode,fileDesc,sizeData);
-    close(fileDesc);
+    int size = stack -> size;
+    recursiveW(currentNode,file,size);
+    close(file);
 
     return my_stack_len(stack);
 }
 
-struct my_stack *my_stack_read (char *filename){
+/*int my_stack_write(struct my_stack *stack, char *filename) {
+    int numNodes = 0;
+    struct my_stack *aux;
+    aux = my_stack_init(sizeof(stack));
+    *aux = *stack;
+    ssize_t file = open(filename, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+    if(file == -1){
+        return numNodes = -1;
+    }
+    void *data = my_stack_pop(aux);
+    while(data != NULL){
+        write(file, data, stack -> size);
+        numNodes++;
+        data = my_stack_pop(aux);
+    }
+    return numNodes;
+}*/
+
+struct my_stack *my_stack_read(char *filename) {
     int fileDesc = open(filename, O_RDONLY, S_IRUSR);
     if(fileDesc == -1) {
         return NULL; // Error open();
     }
     char *buffer = malloc(sizeof(int));
-    int readBytes;
-    if((readBytes = read(fileDesc, buffer, sizeof(int))) == -1){
-        printf("Error reading data size.\n");
+    ssize_t readBytes;
+    readBytes = read(fileDesc, buffer, sizeof(int));
+    if(readBytes == -1) {
         return NULL;
     }
     int dataSize = 0;
@@ -183,7 +205,8 @@ struct my_stack *my_stack_read (char *filename){
     }
     else{
         while(read(fileDesc, buffer, stack -> size) > 0) {
-            if((my_stack_push(stack,buffer))== -1){
+            int push = my_stack_push(stack,buffer);
+            if(push == -1){
                 printf("Error en my_stack_read: Push error.\n");
                 return NULL;
             }
@@ -191,5 +214,5 @@ struct my_stack *my_stack_read (char *filename){
         }
     close(fileDesc);
     return stack;
-    }   
-}
+    }
+}   
