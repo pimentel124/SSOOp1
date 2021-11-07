@@ -1,5 +1,7 @@
 #include "my_lib.h"
 
+//-------------------------FUNCIONS DE STRINGS----------------------------------
+
 size_t my_strlen(const char *str) { //String a comparar
   size_t len = 0;
   int i = 0;
@@ -75,6 +77,9 @@ if (s[i] == c) //Si char trobat, retorna el valor de la posició s[i]
     else
         return NULL; //Si no trobat, retorna NULL
 }
+
+
+//------------------------------------FUNCIONS DE PILA-------------------------------------------
 
 struct my_stack *my_stack_init (int size){ //Tamany de les dades
     struct my_stack *stack = malloc(sizeof(struct my_stack)); //Cream i reservam espai per la pila
@@ -183,33 +188,39 @@ struct my_stack *my_stack_read(char *filename) { //Nom de l'arxiu
     if(file == -1) { //En cas de que no s'hagi pogut obrir l'arxiu, open retorna -1
         return NULL;
     }
-    char *buffer = malloc(sizeof(int)); 
+    char *buffer = malloc(sizeof(int));   //Es crea un buffer per poder guardar un int
     ssize_t readBytes;
-    readBytes = read(file, buffer, sizeof(int));
-    if(readBytes == -1) {
+    readBytes = read(file, buffer, sizeof(int));  //Es llegeix la quantitat de bytes en el fitxer
+    if(readBytes == -1) { //En cas d'error durant la lectura, es retorna null
         return NULL;
     }
     int size_data = 0;
-    size_data = (int) *buffer;
-    struct my_stack *stack; 
-    stack = malloc(sizeof(struct my_stack));
+    size_data = (int) *buffer; //nombre de bytes en el buffer que s'empleen per guardad dades
+    struct my_stack *stack;
+    //Després assgna memória per al stack  
+    stack = malloc(sizeof(struct my_stack)); 
     stack = my_stack_init(size_data);
     buffer = realloc(buffer, stack -> size);
-    if(buffer == NULL){
+    if(buffer == NULL){  //En cas d'error, es retorna null
         return NULL;
     }
     else{
-        ssize_t rd = read(file, buffer, stack -> size);
-        while(rd > 0) {
-            int push = my_stack_push(stack,buffer);
+        ssize_t rd = read(file, buffer, stack -> size); //Quants bytes s'han llegit cap el buffer
+        while(rd > 0) { //S'emplea aquesta quantitat per saber quan hem de parar de llegir cada línia
+                        //Per a poder posarla en memòria abans de continuar amb la següent linia
+
+            int push = my_stack_push(stack,buffer); //Es realitza un push del stack
             if(push == -1){
-                printf("Push error.\n");
+                printf("Push error.\n"); //En cas d'error després del push, es retorna null
                 return NULL;
             }
+            
             buffer = malloc(stack -> size);
             rd = read(file, buffer, stack -> size);
         }
-    close(file);
-    return stack;
+    close(file); //Es tanca el fitxer
+
+    return stack; //Es retorna el stack
+
     }
 }
